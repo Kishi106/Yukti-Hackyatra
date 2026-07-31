@@ -1,15 +1,23 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+import { API_BASE_URL } from '../config';
 
-export const fetchPotholes = async () => {
-  const response = await fetch(`${API_BASE_URL}/potholes`);
+async function handleResponse(response) {
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || `Request failed with status ${response.status}`);
+  }
   return response.json();
-};
+}
 
-export const createPothole = async (payload) => {
+export async function getPotholes() {
+  const response = await fetch(`${API_BASE_URL}/potholes`);
+  return handleResponse(response);
+}
+
+export async function submitReport(data) {
   const response = await fetch(`${API_BASE_URL}/potholes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(data)
   });
-  return response.json();
-};
+  return handleResponse(response);
+}

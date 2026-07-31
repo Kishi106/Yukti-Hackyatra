@@ -1,0 +1,222 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: #f7f7f8;
+  color: #1a1a1a;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  padding: 16px 24px;
+  background: #1e293b;
+  color: #fff;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 20px;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e2e2e2;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #555;
+  gap: 4px;
+}
+
+.filter-field select {
+  padding: 6px 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.error-banner {
+  margin: 0;
+  padding: 8px 24px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.loading-banner {
+  margin: 0;
+  padding: 8px 24px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 14px;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.map-section {
+  flex: 2;
+  min-width: 0;
+  min-height: 500px;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+}
+
+.list-section {
+  flex: 1;
+  min-width: 280px;
+  max-width: 420px;
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #e2e2e2;
+  padding: 12px;
+}
+
+.list-empty {
+  color: #888;
+  font-size: 14px;
+  padding: 12px;
+}
+
+.pothole-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pothole-row {
+  border: 1px solid #e2e2e2;
+  border-left: 4px solid #999;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #fafafa;
+}
+
+.pothole-row:hover {
+  background: #f0f0f0;
+}
+
+.pothole-row.selected {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.pothole-row.severity-low {
+  border-left-color: #2e7d32;
+}
+
+.pothole-row.severity-medium {
+  border-left-color: #ef6c00;
+}
+
+.pothole-row.severity-high {
+  border-left-color: #c62828;
+}
+
+.pothole-row-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.pothole-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.status-new {
+  color: #1d4ed8;
+}
+
+.status-in_progress {
+  color: #b45309;
+}
+
+.status-fixed {
+  color: #15803d;
+}
+
+.pothole-marker-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.popup-content p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.popup-photo {
+  width: 100%;
+  max-width: 200px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+.popup-status-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.popup-status-label select {
+  display: block;
+  margin-top: 4px;
+  padding: 4px;
+}
+
+@media (max-width: 800px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .map-section,
+  .list-section {
+    max-width: 100%;
+  }
+
+  .list-section {
+    border-left: none;
+    border-top: 1px solid #e2e2e2;
+  }
+}
