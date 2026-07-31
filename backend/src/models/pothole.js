@@ -3,7 +3,20 @@ const SOURCE_VALUES = ['auto', 'citizen'];
 const STATUS_VALUES = ['new', 'in_progress', 'fixed'];
 
 class Pothole {
-  constructor({ id, lat, lng, severity, source, photo_url, status, ward, created_at }) {
+  constructor({
+    id,
+    lat,
+    lng,
+    severity,
+    source,
+    photo_url,
+    status,
+    ward,
+    created_at,
+    reporter_id,
+    confidence_score,
+    user_confirmed
+  }) {
     this.id = id;
     this.lat = lat;
     this.lng = lng;
@@ -13,6 +26,9 @@ class Pothole {
     this.status = status;
     this.ward = ward;
     this.created_at = created_at;
+    this.reporter_id = reporter_id;
+    this.confidence_score = confidence_score;
+    this.user_confirmed = user_confirmed;
   }
 }
 
