@@ -1,6 +1,0 @@
-{
-  "name": "RoadGuard AI",
-  "description": "Help citizens automatically detect and report potholes using smartphone sensors and GPS while allowing manual reporting.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

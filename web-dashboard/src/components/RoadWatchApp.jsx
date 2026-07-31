@@ -524,12 +524,10 @@ export default function RoadWatchApp() {
       <header className="border-b bg-white" style={{ borderColor: LINE }}>
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: GOV }}>
-              <AlertTriangle size={16} color="white" />
-            </div>
+            <img src="/logo.png" alt="S.P.O.T-V logo" className="w-8 h-8 rounded-md object-contain" />
             <div>
-              <p style={{ ...display, color: INK, fontSize: 20, lineHeight: 1 }}>ROADWATCH</p>
-              <p className="text-[10.5px]" style={{ ...inter, color: INK_LO }}>Greater Visakhapatnam Municipal Corporation</p>
+              <p style={{ ...display, color: INK, fontSize: 20, lineHeight: 1 }}>S.P.O.T-V</p>
+              <p className="text-[10.5px]" style={{ ...inter, color: INK_LO }}>Smart Pothole Observation Technology of Visakhapatnam</p>
             </div>
           </div>
           <div className="flex gap-1 p-1 rounded-lg" style={{ background: "#EEF2F7" }}>
