@@ -1,11 +1,16 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS potholes (
-  id SERIAL PRIMARY KEY,
-  latitude DOUBLE PRECISION NOT NULL,
-  longitude DOUBLE PRECISION NOT NULL,
-  severity VARCHAR(20) NOT NULL DEFAULT 'medium',
-  status VARCHAR(20) NOT NULL DEFAULT 'reported',
-  description TEXT,
-  image_url TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
+  source TEXT NOT NULL CHECK (source IN ('auto', 'citizen')),
+  photo_url TEXT,
+  status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'fixed')),
+  ward TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_potholes_status ON potholes (status);
+CREATE INDEX IF NOT EXISTS idx_potholes_ward ON potholes (ward);

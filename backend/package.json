@@ -4,9 +4,11 @@
   "description": "Backend API for pothole reporting",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "migrate": "node -e \"require('dotenv').config();const fs=require('fs');const {Pool}=require('pg');const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});pool.query(fs.readFileSync('migrations/001_create_potholes.sql','utf8')).then(()=>{console.log('Migration applied successfully.');return pool.end();}).catch((e)=>{console.error('Migration failed:',e.message);process.exit(1);});\""
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.21.2",
     "pg": "^8.9.0"

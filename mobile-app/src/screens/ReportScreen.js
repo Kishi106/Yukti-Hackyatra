@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } fr
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { submitReport } from '../services/api';
-import { uploadPhoto } from '../services/upload';
 import { trackSubmittedReportId } from './StatusScreen';
 
 const SEVERITIES = ['low', 'medium', 'high'];
@@ -35,9 +34,8 @@ export default function ReportScreen() {
 
       let photoUrl = null;
       if (!photoResult.canceled && photoResult.assets && photoResult.assets.length > 0) {
-        const localUri = photoResult.assets[0].uri;
-        setPhotoUri(localUri);
-        photoUrl = await uploadPhoto(localUri);
+        photoUrl = photoResult.assets[0].uri;
+        setPhotoUri(photoUrl);
       }
 
       const created = await submitReport({

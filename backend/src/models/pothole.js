@@ -1,13 +1,19 @@
+const SEVERITY_VALUES = ['low', 'medium', 'high'];
+const SOURCE_VALUES = ['auto', 'citizen'];
+const STATUS_VALUES = ['new', 'in_progress', 'fixed'];
+
 class Pothole {
-  constructor({ id, latitude, longitude, severity, status, description, image_url }) {
+  constructor({ id, lat, lng, severity, source, photo_url, status, ward, created_at }) {
     this.id = id;
-    this.latitude = latitude;
-    this.longitude = longitude;
+    this.lat = lat;
+    this.lng = lng;
     this.severity = severity;
+    this.source = source;
+    this.photo_url = photo_url;
     this.status = status;
-    this.description = description;
-    this.image_url = image_url;
+    this.ward = ward;
+    this.created_at = created_at;
   }
 }
 
-module.exports = Pothole;
+module.exports = { Pothole, SEVERITY_VALUES, SOURCE_VALUES, STATUS_VALUES };

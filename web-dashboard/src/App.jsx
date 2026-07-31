@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MapView from './components/MapView';
 import FilterBar from './components/FilterBar';
-import PotholeList from './components/PotholeList';
 import { getPotholes, updatePotholeStatus } from './services/api';
 
 const REFRESH_INTERVAL_MS = 15000;
@@ -81,7 +80,28 @@ export default function App() {
           />
         </section>
         <section className="list-section">
-          <PotholeList potholes={potholes} selectedId={selectedId} onSelect={(p) => setSelectedId(p.id)} />
+          {potholes.length === 0 ? (
+            <p className="list-empty">No pothole reports match the current filters.</p>
+          ) : (
+            <ul className="pothole-list">
+              {potholes.map((pothole) => (
+                <li
+                  key={pothole.id}
+                  className={`pothole-row severity-${pothole.severity} ${pothole.id === selectedId ? 'selected' : ''}`}
+                  onClick={() => setSelectedId(pothole.id)}
+                >
+                  <div className="pothole-row-top">
+                    <span className="pothole-severity">{pothole.severity}</span>
+                    <span className={`pothole-status status-${pothole.status}`}>{pothole.status}</span>
+                  </div>
+                  <div className="pothole-row-bottom">
+                    <span>{pothole.ward || 'Unknown ward'}</span>
+                    <span>{new Date(pothole.created_at).toLocaleString()}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </main>
     </div>
