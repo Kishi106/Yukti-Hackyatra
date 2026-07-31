@@ -1,203 +1,86 @@
 # Smart Pothole Detection & Automated Citizen Reporting
 
-> **HackYatra 2026 – SW11**
-> **Problem Statement:** Pothole Detection and Automated Citizen Reporting
+> HackYatra 2026 — SW11
 
 ## Overview
 
-Road potholes are a major cause of vehicle damage, traffic congestion, and accidents. Currently, the Greater Visakhapatnam Municipal Corporation (GVMC) relies on periodic inspections and citizen complaints to identify road damage. This reactive process often results in delayed repairs, especially during the monsoon season when potholes develop rapidly.
+This project is a full-stack pothole reporting platform for citizens and municipal authorities. Citizens can report potholes from a mobile app, while officials can view and manage reports from a web dashboard.
 
-This project provides a **smart, semi-automated pothole reporting system** that enables citizens to report potholes accurately while giving municipal authorities a centralized platform to verify, prioritize, and monitor repairs.
-
----
-
-# Features
-
-## Citizen Mobile Application (Flutter)
-
-* GPS-based pothole reporting
-* Automatic location detection
-* Smartphone accelerometer-assisted pothole detection
-* User confirmation before submission
-* Photo capture and upload
-* AI-assisted image verification (optional)
-* Report status tracking
-
----
-
-## Admin Dashboard (React.js)
-
-* Interactive GIS map
-* View all reported potholes
-* Verify or reject reports
-* Track repair progress
-* Report analytics
-* Hotspot visualization
-* Report filtering and search
-
----
-
-# How It Works
+## Project Structure
 
 ```text
-Vehicle Moving
-      │
-      ▼
-Accelerometer Detects Sudden Impact
-      │
-      ▼
-Collect High-Accuracy GPS
-      │
-      ▼
-Google Roads API
-(Snap Location to Road)
-      │
-      ▼
-User Captures Photo
-      │
-      ▼
-AI / User Verification
-      │
-      ▼
-Upload Report
-      │
-      ▼
-Backend
-      │
-      ▼
-Admin Dashboard
-      │
-      ▼
-Verification → Repair → Completion
-```
-
----
-
-# Technology Stack
-
-## Mobile
-
-* Flutter
-* Dart
-
-## Frontend
-
-* React.js
-
-## Backend
-
-* Node.js
-* Express.js
-
-## Database
-
-* Firebase Firestore *(or Supabase)*
-
-## Maps & Location
-
-* Google Maps SDK
-* Google Roads API
-* Geolocator (Flutter)
-
-## Image Storage
-
-* Firebase Storage
-
-## AI (Optional)
-
-* TensorFlow Lite / Google Vision API
-* Custom pothole detection model
-
----
-
-# System Architecture
-
-```text
-Flutter App
-      │
-      │
-      ▼
-Node.js + Express API
-      │
-      │
-      ├──────── Firebase / Supabase
-      │
-      ├──────── Firebase Storage
-      │
-      ├──────── Google Maps API
-      │
-      └──────── Google Roads API
-                    │
-                    ▼
-            React Admin Dashboard
-```
-
----
-
-# Accuracy Strategy
-
-The application does **not** rely solely on accelerometer readings because sudden impacts can also occur due to:
-
-* Speed breakers
-* Rough roads
-* Sudden braking
-* Phone movement
-
-To improve accuracy, the system combines:
-
-* High-accuracy GPS
-* Google Roads API (Snap to Roads)
-* User confirmation
-* Photo evidence
-* AI image verification *(optional)*
-* Duplicate report detection
-
----
-
-# Report Lifecycle
-
-```text
-Reported
-     │
-     ▼
-Verified
-     │
-     ▼
-Assigned
-     │
-     ▼
-Repair In Progress
-     │
-     ▼
-Repaired
-     │
-     ▼
-Closed
-```
-
----
-
-# Folder Structure
-
-```text
-project-root/
-
-├── mobile/
-│   ├── lib/
-│   ├── assets/
-│   └── pubspec.yaml
-│
-├── backend/
+backend/                  # Person 1 — deploys to Render
+├── src/
 │   ├── routes/
-│   ├── controllers/
+│   │   └── potholes.js
+│   ├── db.js
 │   ├── models/
-│   ├── middleware/
+│   │   └── pothole.js
 │   └── server.js
-│
-├── dashboard/
-│   ├── src/
-│   ├── public/
-│   └── package.json
+├── migrations/
+│   └── 001_create_potholes.sql
+├── .env.example
+├── package.json
+└── render.yaml
+
+mobile-app/               # Persons 2 & 3 — built via EAS, installed as APK
+├── App.js
+├── src/
+│   ├── screens/
+│   │   ├── DetectScreen.js
+│   │   ├── ReportScreen.js
+│   │   └── StatusScreen.js
+│   ├── services/
+│   │   ├── accelerometer.js
+│   │   └── api.js
+│   └── config.js
+├── app.json
+├── .env.example
+└── package.json
+
+web-dashboard/            # Person 4 — deploys to Vercel
+├── src/
+│   ├── components/
+│   │   ├── MapView.jsx
+│   │   └── FilterBar.jsx
+│   ├── services/
+│   │   └── api.js
+│   ├── App.jsx
+│   └── config.js
+├── .env.example
+└── package.json
+
+SCHEMA.md                 # Shared contract for all teams
+README.md
+```
+
+## Stack Summary
+
+| Layer | Technology | Deployment |
+| --- | --- | --- |
+| Backend | Node.js + Express | Render |
+| Database | PostgreSQL | Render Postgres or Supabase |
+| Mobile App | Expo (React Native) | EAS build as APK |
+| Web Dashboard | React + Leaflet.js | Vercel |
+
+## Suggested Deployment Notes
+
+- Backend: deploy the Node.js service from the backend folder to Render.
+- Database: use a PostgreSQL instance and set the DATABASE_URL environment value.
+- Mobile app: build with Expo/EAS and distribute the APK.
+- Web dashboard: deploy the React app from the web-dashboard folder to Vercel.
+
+## Shared Contract
+
+The API and data shape are documented in [SCHEMA.md](SCHEMA.md).
+
+## Getting Started
+
+1. Review [SCHEMA.md](SCHEMA.md) first.
+2. Set up the backend and connect it to PostgreSQL.
+3. Configure the mobile app and web dashboard to use the backend URL.
+4. Run the app locally and test the report flow.
+
 │
 ├── docs/
 │
