@@ -1,53 +1,59 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import RoadWatchApp from './components/RoadWatchApp';
-import MapView from './components/MapView';
-import { getPotholes, updatePotholeStatus } from './services/api';
-
-const REFRESH_INTERVAL_MS = 15000;
+import React, { useEffect, useState } from 'react';
+import AuthPage from './pages/AuthPage';
+import WardPickerPage from './pages/WardPickerPage';
+import Dashboard from './components/Dashboard';
+import { getStoredSession, validateSession, clearSession } from './services/auth';
 
 export default function App() {
-  const [potholes, setPotholes] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
-
-  const load = useCallback(async () => {
-    try {
-      const data = await getPotholes();
-      setPotholes(data);
-    } catch (err) {
-      console.error('Failed to load potholes for map', err);
-    }
-  }, []);
+  const [session, setSession] = useState(undefined); // undefined = still checking
+  const [ward, setWard] = useState(null); // { wardNo, wardLabel } | null — React state only, resets on refresh
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [load]);
-
-  const selectedPothole = useMemo(
-    () => potholes.find((p) => p.id === selectedId) || null,
-    [potholes, selectedId]
-  );
-
-  async function handleStatusChange(id, newStatus) {
-    try {
-      await updatePotholeStatus(id, newStatus);
-      await load();
-    } catch (err) {
-      console.error('Failed to update pothole status', err);
+    const stored = getStoredSession();
+    if (!stored) {
+      setSession(null);
+      return;
     }
+    // Trust the stored session immediately so refreshes don't force a re-login;
+    // only clear it if the backend actively rejects the token.
+    setSession(stored);
+    validateSession(stored.token).catch(() => {
+      clearSession();
+      setSession(null);
+    });
+  }, []);
+
+  function handleLogout() {
+    clearSession();
+    setSession(null);
+    setWard(null);
+  }
+
+  if (session === undefined) {
+    return null;
+  }
+
+  if (!session) {
+    return <AuthPage onAuthenticated={setSession} />;
+  }
+
+  if (session.role === 'field_officer' && !ward) {
+    return (
+      <WardPickerPage
+        officialName={session.name}
+        onWardSelected={(wardNo, wardName) => setWard({ wardNo, wardLabel: `Ward ${wardNo} — ${wardName}` })}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (
-    <>
-      <RoadWatchApp />
-      <section className="map-section">
-        <MapView
-          potholes={potholes}
-          selectedPothole={selectedPothole}
-          onStatusChange={handleStatusChange}
-        />
-      </section>
-    </>
+    <Dashboard
+      official={session}
+      wardNo={session.role === 'field_officer' ? ward.wardNo : null}
+      wardLabel={session.role === 'field_officer' ? ward.wardLabel : null}
+      onChangeWard={session.role === 'field_officer' ? () => setWard(null) : null}
+      onLogout={handleLogout}
+    />
   );
 }
