@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const { SEVERITY_VALUES, SOURCE_VALUES, STATUS_VALUES } = require('../models/pothole');
+const { resolveWard } = require('../wardLookup');
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ const DUPLICATE_LNG_DELTA = 0.0003;
 
 router.get('/', async (req, res) => {
   try {
-    const { status, ward } = req.query;
+    const { status, ward, ward_no: wardNo } = req.query;
     const conditions = [];
     const params = [];
 
@@ -21,6 +22,14 @@ router.get('/', async (req, res) => {
     if (ward) {
       params.push(ward);
       conditions.push(`ward = $${params.length}`);
+    }
+    if (wardNo !== undefined) {
+      const parsedWardNo = parseInt(wardNo, 10);
+      if (Number.isNaN(parsedWardNo)) {
+        return res.status(400).json({ error: 'ward_no must be an integer' });
+      }
+      params.push(parsedWardNo);
+      conditions.push(`ward_no = $${params.length}`);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -43,6 +52,15 @@ router.post('/', async (req, res) => {
     }
     if (!SOURCE_VALUES.includes(source)) {
       return res.status(400).json({ error: `source must be one of: ${SOURCE_VALUES.join(', ')}` });
+    }
+
+    // The real GPS coordinates are authoritative over any client-supplied ward text.
+    let wardName = ward ?? null;
+    let wardNo = null;
+    const resolvedWard = resolveWard(lat, lng);
+    if (resolvedWard) {
+      wardNo = resolvedWard.wardNo;
+      wardName = resolvedWard.wardName;
     }
 
     let confidenceScore = source === 'auto' ? 30 : 0;
@@ -70,10 +88,10 @@ router.post('/', async (req, res) => {
     confidenceScore = Math.min(confidenceScore, 100);
 
     const result = await query(
-      `INSERT INTO potholes (lat, lng, severity, source, ward, photo_url, reporter_id, confidence_score)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO potholes (lat, lng, severity, source, ward, ward_no, photo_url, reporter_id, confidence_score)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [lat, lng, severity, source, ward ?? null, photo_url ?? null, reporter_id ?? null, confidenceScore]
+      [lat, lng, severity, source, wardName, wardNo, photo_url ?? null, reporter_id ?? null, confidenceScore]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
