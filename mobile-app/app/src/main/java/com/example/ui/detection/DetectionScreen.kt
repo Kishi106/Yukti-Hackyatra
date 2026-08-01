@@ -1,5 +1,7 @@
 package com.example.ui.detection
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,11 +20,58 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.services.LocationService
+import kotlinx.coroutines.launch
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetectionScreen(navController: NavController) {
     var isDetecting by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
+    var isFetchingLocation by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val locationService = remember { LocationService(context) }
+
+    fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+    fun fetchLocationAndConfirm() {
+        coroutineScope.launch {
+            isFetchingLocation = true
+            errorMessage = null
+            val location = locationService.requestFreshLocation()
+            isFetchingLocation = false
+            showDialog = false
+            if (location != null) {
+                navController.navigate(
+                    "confirm_pothole/${location.latitude}/${location.longitude}/${System.currentTimeMillis()}"
+                )
+            } else {
+                errorMessage = "Could not get your current location. Please try again."
+            }
+        }
+    }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            fetchLocationAndConfirm()
+        } else {
+            showDialog = false
+            errorMessage = "Location permission is required to report a pothole."
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -60,7 +109,7 @@ fun DetectionScreen(navController: NavController) {
                     .scale(scale)
                     .clip(CircleShape)
                     .background(
-                        if (isDetecting) MaterialTheme.colorScheme.primaryContainer 
+                        if (isDetecting) MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceVariant
                     ),
                 contentAlignment = Alignment.Center
@@ -77,9 +126,9 @@ fun DetectionScreen(navController: NavController) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Text(
                 text = if (isDetecting) "Sensors Active\nListening for impacts..." else "Drive Mode Inactive\nTap to Start",
                 style = MaterialTheme.typography.titleLarge,
@@ -87,7 +136,7 @@ fun DetectionScreen(navController: NavController) {
                 color = if (isDetecting) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
 
             if (isDetecting) {
@@ -114,31 +163,45 @@ fun DetectionScreen(navController: NavController) {
                     Text("Simulate Impact")
                 }
             }
+
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = errorMessage ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            icon = { 
+            icon = {
                 Icon(
-                    Icons.Outlined.WarningAmber, 
-                    contentDescription = null, 
-                    tint = MaterialTheme.colorScheme.error, 
+                    Icons.Outlined.WarningAmber,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(48.dp)
-                ) 
+                )
             },
             title = { Text("Possible Pothole Detected") },
             text = { Text("A sudden impact was detected by your device sensors. Did you encounter a pothole?") },
             confirmButton = {
                 Button(
                     onClick = {
-                        showDialog = false
-                        navController.navigate("confirm_pothole")
+                        if (hasLocationPermission()) {
+                            fetchLocationAndConfirm()
+                        } else {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
                     },
+                    enabled = !isFetchingLocation,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("YES")
+                    Text(if (isFetchingLocation) "..." else "YES")
                 }
             },
             dismissButton = {

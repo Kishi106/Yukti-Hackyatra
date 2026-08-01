@@ -8,11 +8,13 @@ React + Vite dashboard for government officials to monitor pothole reports on a 
 npm install
 ```
 
-Set the backend URL in `src/config.js`:
+Set the backend URL in your frontend environment:
 
-```js
-export const API_BASE_URL = 'https://your-backend.onrender.com';
+```bash
+VITE_API_URL=https://your-backend.onrender.com
 ```
+
+If `VITE_API_URL` is not set, the app will fall back to `http://localhost:3000`.
 
 ## Run locally
 

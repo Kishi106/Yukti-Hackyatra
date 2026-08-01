@@ -160,15 +160,16 @@ fun DrivingModeCard(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val allGranted = permissions.entries.all { it.value }
-        if (allGranted || permissions.isNotEmpty()) {
+        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationGranted) {
             viewModel.startDriving()
             coroutineScope.launch {
                 snackbarHostState.showSnackbar("Driving Mode Enabled")
             }
         } else {
             coroutineScope.launch {
-                snackbarHostState.showSnackbar("Permissions are needed for driving mode")
+                snackbarHostState.showSnackbar("Location permission is required for driving mode")
             }
         }
     }

@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.ui.detection.ConfirmationScreen
 import com.example.ui.detection.DetectionScreen
 import com.example.ui.home.HomeScreen
@@ -32,7 +34,19 @@ fun MainApp(initialRoute: String = "home", themeViewModel: ThemeViewModel? = nul
             composable("map") { LiveMapScreen(navController) }
             composable("report") { DetectionScreen(navController) }
             composable("manual_report") { ManualReportScreen(navController) }
-            composable("confirm_pothole") { ConfirmationScreen(navController) }
+            composable(
+                route = "confirm_pothole/{lat}/{lng}/{timestamp}",
+                arguments = listOf(
+                    navArgument("lat") { type = NavType.StringType },
+                    navArgument("lng") { type = NavType.StringType },
+                    navArgument("timestamp") { type = NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+                val lng = backStackEntry.arguments?.getString("lng")?.toDoubleOrNull() ?: 0.0
+                val timestamp = backStackEntry.arguments?.getLong("timestamp") ?: System.currentTimeMillis()
+                ConfirmationScreen(navController, lat, lng, timestamp)
+            }
             composable("notifications") { NotificationsScreen(navController) }
             composable("reports") { MyReportsScreen(navController) }
             composable("profile") { ProfileScreen(navController) }
@@ -40,4 +54,3 @@ fun MainApp(initialRoute: String = "home", themeViewModel: ThemeViewModel? = nul
         }
     }
 }
-

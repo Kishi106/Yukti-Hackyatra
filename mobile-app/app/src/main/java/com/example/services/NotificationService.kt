@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.example.MainActivity
 
 class NotificationService(private val context: Context) {
 
@@ -30,13 +29,13 @@ class NotificationService(private val context: Context) {
         }
     }
 
-    fun showPotholeAlertNotification() {
-        val yesIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("action", "CONFIRM_POTHOLE")
+    fun showPotholeAlertNotification(potholeId: String) {
+        val confirmIntent = Intent(context, NotificationReceiver::class.java).apply {
+            action = "CONFIRM_POTHOLE"
+            putExtra("pothole_id", potholeId)
         }
-        val yesPendingIntent = PendingIntent.getActivity(
-            context, 0, yesIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        val confirmPendingIntent = PendingIntent.getBroadcast(
+            context, 2, confirmIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val noIntent = Intent(context, NotificationReceiver::class.java).apply {
@@ -52,7 +51,7 @@ class NotificationService(private val context: Context) {
             .setContentText("Did you encounter a pothole?")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .addAction(android.R.drawable.ic_menu_edit, "YES", yesPendingIntent)
+            .addAction(android.R.drawable.ic_menu_edit, "Yes, that's a pothole", confirmPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "NO", noPendingIntent)
 
         notificationManager.notify(NOTIFICATION_ID, builder.build())

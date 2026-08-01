@@ -2,6 +2,9 @@ package com.example.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -9,7 +12,8 @@ sealed class ApiResult<out T> {
 }
 
 class PotholeRepository(
-    private val api: PotholeApiService = NetworkModule.potholeApiService
+    private val api: PotholeApiService = NetworkModule.potholeApiService,
+    private val uploadApi: UploadApiService = NetworkModule.uploadApiService
 ) {
 
     suspend fun getPotholes(status: String? = null, ward: String? = null): ApiResult<List<PotholeDto>> =
@@ -17,7 +21,7 @@ class PotholeRepository(
             try {
                 ApiResult.Success(api.getPotholes(status, ward))
             } catch (e: Exception) {
-                ApiResult.Error(e.message ?: "Failed to load potholes")
+                ApiResult.Error(e.toUserMessage("Failed to load potholes"))
             }
         }
 
@@ -27,7 +31,8 @@ class PotholeRepository(
         severity: String,
         source: String,
         ward: String? = null,
-        photoUrl: String? = null
+        photoUrl: String? = null,
+        reporterId: String? = null
     ): ApiResult<PotholeDto> = withContext(Dispatchers.IO) {
         try {
             ApiResult.Success(
@@ -38,12 +43,13 @@ class PotholeRepository(
                         severity = severity,
                         source = source,
                         ward = ward,
-                        photoUrl = photoUrl
+                        photoUrl = photoUrl,
+                        reporterId = reporterId
                     )
                 )
             )
         } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Failed to submit report")
+            ApiResult.Error(e.toUserMessage("Failed to submit report"))
         }
     }
 
@@ -52,7 +58,26 @@ class PotholeRepository(
             try {
                 ApiResult.Success(api.updateStatus(id, UpdateStatusRequest(status)))
             } catch (e: Exception) {
-                ApiResult.Error(e.message ?: "Failed to update status")
+                ApiResult.Error(e.toUserMessage("Failed to update status"))
+            }
+        }
+
+    suspend fun confirmPothole(id: String): ApiResult<PotholeDto> = withContext(Dispatchers.IO) {
+        try {
+            ApiResult.Success(api.confirmPothole(id))
+        } catch (e: Exception) {
+            ApiResult.Error(e.toUserMessage("Failed to confirm pothole"))
+        }
+    }
+
+    suspend fun uploadPhoto(imageBytes: ByteArray, filename: String): ApiResult<String> =
+        withContext(Dispatchers.IO) {
+            try {
+                val requestBody = imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("photo", filename, requestBody)
+                ApiResult.Success(uploadApi.uploadPhoto(part).url)
+            } catch (e: Exception) {
+                ApiResult.Error(e.toUserMessage("Failed to upload photo"))
             }
         }
 }

@@ -26,6 +26,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import com.example.data.UserPrefs
+import com.example.network.ApiResult
 import com.example.network.PotholeRepository
 import com.example.services.LocationService
 import kotlinx.coroutines.launch
@@ -45,6 +47,10 @@ fun ManualReportScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val locationService = remember { LocationService(context) }
     val potholeRepository = remember { PotholeRepository() }
+    val userPrefs = remember { UserPrefs(context) }
+
+    var isSubmitting by remember { mutableStateOf(false) }
+    var submitError by remember { mutableStateOf<String?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
@@ -93,30 +99,76 @@ fun ManualReportScreen(navController: NavController) {
             ) {
                 Button(
                     onClick = {
-                        showSuccessDialog = true
+                        submitError = null
                         val severity = selectedSeverity.name.lowercase()
-                        val photoUrlValue = photoUri?.toString()
                         coroutineScope.launch {
-                            val location = locationService.getCurrentLocation()
-                            val lat = location?.latitude ?: 17.7293
-                            val lng = location?.longitude ?: 83.3152
-                            potholeRepository.submitReport(
-                                lat = lat,
-                                lng = lng,
-                                severity = severity,
-                                source = "citizen",
-                                ward = null,
-                                photoUrl = photoUrlValue
-                            )
+                            isSubmitting = true
+                            try {
+                                val bytes = when {
+                                    photoUri != null -> context.contentResolver.openInputStream(photoUri!!)?.use { it.readBytes() }
+                                    photoBitmap != null -> {
+                                        val stream = java.io.ByteArrayOutputStream()
+                                        photoBitmap!!.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+                                        stream.toByteArray()
+                                    }
+                                    else -> null
+                                }
+
+                                var photoUrlValue: String? = null
+                                if (bytes != null) {
+                                    when (val uploadResult = potholeRepository.uploadPhoto(bytes, "pothole_${System.currentTimeMillis()}.jpg")) {
+                                        is ApiResult.Success -> photoUrlValue = uploadResult.data
+                                        is ApiResult.Error -> {
+                                            submitError = "Photo upload failed: ${uploadResult.message}"
+                                            isSubmitting = false
+                                            return@launch
+                                        }
+                                    }
+                                }
+
+                                val location = locationService.requestFreshLocation()
+                                val lat = location?.latitude ?: 17.7293
+                                val lng = location?.longitude ?: 83.3152
+                                val reporterId = userPrefs.getUserId()
+
+                                when (val result = potholeRepository.submitReport(
+                                    lat = lat,
+                                    lng = lng,
+                                    severity = severity,
+                                    source = "citizen",
+                                    ward = null,
+                                    photoUrl = photoUrlValue,
+                                    reporterId = reporterId
+                                )) {
+                                    is ApiResult.Success -> {
+                                        showSuccessDialog = true
+                                    }
+                                    is ApiResult.Error -> {
+                                        submitError = result.message
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                submitError = e.message ?: "Something went wrong while submitting the report."
+                            } finally {
+                                isSubmitting = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = isPhotoAttached
+                    enabled = isPhotoAttached && !isSubmitting
                 ) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Submit Report", style = MaterialTheme.typography.titleMedium)
+                    if (isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.CloudUpload, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Submit Report", style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
         }
@@ -268,6 +320,14 @@ fun ManualReportScreen(navController: NavController) {
                         }
                     }
                 }
+            }
+
+            if (submitError != null) {
+                Text(
+                    text = submitError ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

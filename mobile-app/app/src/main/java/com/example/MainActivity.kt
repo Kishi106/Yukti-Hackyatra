@@ -17,17 +17,14 @@ class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    
-    val startAction = intent.getStringExtra("action")
-    val initialRoute = if (startAction == "CONFIRM_POTHOLE") "confirm_pothole" else "home"
-    
+
     enableEdgeToEdge()
     setContent {
       val isDarkModeState by themeViewModel.isDarkMode.collectAsState()
       val isDark = isDarkModeState ?: isSystemInDarkTheme()
 
       RoadGuardAITheme(darkTheme = isDark) {
-        MainApp(initialRoute = initialRoute, themeViewModel = themeViewModel)
+        MainApp(themeViewModel = themeViewModel)
       }
     }
   }

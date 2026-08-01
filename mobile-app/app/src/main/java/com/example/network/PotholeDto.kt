@@ -13,7 +13,10 @@ data class PotholeDto(
     @Json(name = "photo_url") val photoUrl: String?,
     val status: String,
     val ward: String?,
-    @Json(name = "created_at") val createdAt: String
+    @Json(name = "created_at") val createdAt: String,
+    @Json(name = "reporter_id") val reporterId: String? = null,
+    @Json(name = "confidence_score") val confidenceScore: Int = 0,
+    @Json(name = "user_confirmed") val userConfirmed: Boolean = false
 )
 
 @JsonClass(generateAdapter = true)
@@ -23,7 +26,8 @@ data class CreatePotholeRequest(
     val severity: String,
     val source: String,
     val ward: String?,
-    @Json(name = "photo_url") val photoUrl: String?
+    @Json(name = "photo_url") val photoUrl: String?,
+    @Json(name = "reporter_id") val reporterId: String?
 )
 
 @JsonClass(generateAdapter = true)

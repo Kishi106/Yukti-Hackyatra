@@ -23,4 +23,7 @@ interface PotholeApiService {
         @Path("id") id: String,
         @Body body: UpdateStatusRequest
     ): PotholeDto
+
+    @PATCH("potholes/{id}/confirm")
+    suspend fun confirmPothole(@Path("id") id: String): PotholeDto
 }

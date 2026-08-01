@@ -21,11 +21,15 @@ router.post('/', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') {
-      const existing = await query('SELECT id FROM users WHERE phone = $1', [req.body.phone]);
-      return res.status(409).json({
-        error: 'Account already exists for this phone number',
-        existingUserId: existing.rows[0]?.id
-      });
+      try {
+        const existing = await query('SELECT id FROM users WHERE phone = $1', [req.body.phone]);
+        return res.status(409).json({
+          error: 'Account already exists for this phone number',
+          existingUserId: existing.rows[0]?.id
+        });
+      } catch (lookupError) {
+        return res.status(500).json({ error: lookupError.message });
+      }
     }
     res.status(500).json({ error: error.message });
   }
