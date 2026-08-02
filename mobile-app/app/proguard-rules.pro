@@ -1,4 +1,4 @@
-# Add project specific ProGuard rules here.
+# Add project specific S.P.O.T-V rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 #
