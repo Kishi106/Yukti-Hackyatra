@@ -3,6 +3,7 @@ import Header from './dashboard/Header';
 import Sidebar from './dashboard/Sidebar';
 import StatusOverview from './dashboard/StatusOverview';
 import StatCards, { Layers, Gauge } from './dashboard/StatCards';
+import BudgetCard from './dashboard/BudgetCard';
 import ResolutionChart from './dashboard/ResolutionChart';
 import WardDensityMap from './dashboard/WardDensityMap';
 import ReportsView from './dashboard/ReportsView';
@@ -75,23 +76,41 @@ export default function Dashboard({ official, wardNo, wardLabel, onChangeWard, o
       />
 
       {activeView === 'dashboard' && (
-        <main
-          style={{
-            flex: 1,
-            minHeight: 0,
-            padding: 16,
-            display: 'grid',
-            gridTemplateColumns: 'minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 320px)',
-            gap: 16
-          }}
-          className="dashboard-grid"
-        >
-          <div style={{ minHeight: 0, height: 'calc(100vh - 100px)' }}>
-            <Sidebar potholes={potholes} onSelectPothole={handleLocate} onLocatePothole={handleLocate} />
-          </div>
+        <>
+          <main
+            style={{
+              height: 'min(72vh, 700px)',
+              padding: '16px 16px 0',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 320px)',
+              gap: 16
+            }}
+            className="dashboard-grid"
+          >
+            <div className="dash-sidebar" style={{ minHeight: 0, height: '100%' }}>
+              <Sidebar potholes={potholes} onSelectPothole={handleLocate} onLocatePothole={handleLocate} />
+            </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
-            <div style={{ height: 'min(50vh, 460px)', minHeight: 320 }}>
+            <div className="dash-main" style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0, height: '100%', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: '2 1 260px' }}>
+                  <StatCards totalReports={potholes.length} secondary={secondaryStat} />
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <BudgetCard />
+                </div>
+              </div>
+              <StatusOverview potholes={potholes} />
+              <ResolutionChart potholes={potholes} />
+            </div>
+
+            <div className="dash-analytics" style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0, height: '100%', overflowY: 'auto' }}>
+              <WardDensityMap potholes={potholes} />
+            </div>
+          </main>
+
+          <div className="dash-livemap" style={{ padding: 16 }}>
+            <div style={{ height: 'min(60vh, 560px)', minHeight: 360 }}>
               <MapView
                 potholes={potholes}
                 selectedPothole={focusPothole}
@@ -99,15 +118,8 @@ export default function Dashboard({ official, wardNo, wardLabel, onChangeWard, o
                 selectedWardNo={wardNo}
               />
             </div>
-            <WardDensityMap potholes={potholes} />
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0, overflowY: 'auto' }}>
-            <StatusOverview potholes={potholes} />
-            <StatCards totalReports={potholes.length} secondary={secondaryStat} />
-            <ResolutionChart potholes={potholes} />
-          </div>
-        </main>
+        </>
       )}
 
       {activeView === 'reports' && (

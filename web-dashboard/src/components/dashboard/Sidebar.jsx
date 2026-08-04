@@ -59,6 +59,7 @@ function PotholeCard({ pothole, expanded, onToggle, onSelect, onLocate }) {
     <div
       style={{
         position: 'relative',
+        flexShrink: 0,
         border: `1px solid ${LINE}`,
         borderRadius: 10,
         background: expanded ? '#F7FAFC' : 'white',
