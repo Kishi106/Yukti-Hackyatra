@@ -36,7 +36,7 @@ async function refreshWardCache() {
 // nothing to match against until this resolves (a negligible window right after
 // server startup), rather than blocking the whole module system on a DB round trip.
 refreshWardCache().catch((error) => {
-  console.error('Failed to load ward boundary cache:', error.message);
+  console.error('Failed to load ward boundary cache:', error);
 });
 
 function resolveWard(lat, lng) {
