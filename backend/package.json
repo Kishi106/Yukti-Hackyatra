@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "test": "jest",
     "migrate": "node -e \"require('dotenv').config();const fs=require('fs');const path=require('path');const {Pool}=require('pg');const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});const dir='migrations';const files=fs.readdirSync(dir).filter((f)=>f.endsWith('.sql')).sort();(async()=>{try{for(const f of files){console.log('Applying',f);await pool.query(fs.readFileSync(path.join(dir,f),'utf8'));}console.log('Migration applied successfully.');await pool.end();}catch(e){console.error('Migration failed:',e.message);process.exit(1);}})();\""
   },
   "dependencies": {
@@ -18,5 +19,8 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "pg": "^8.9.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }

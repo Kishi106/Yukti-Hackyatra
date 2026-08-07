@@ -2,12 +2,10 @@ const express = require('express');
 const { query } = require('../db');
 const { SEVERITY_VALUES, SOURCE_VALUES, STATUS_VALUES } = require('../models/pothole');
 const { resolveWard } = require('../wardLookup');
+const { matchOrCreatePothole } = require('../potholeMerge');
+const { recomputeAllRedZones } = require('../redZones');
 
 const router = express.Router();
-
-// Duplicate-detection radius: ~30m in each direction at typical GVMC latitudes.
-const DUPLICATE_LAT_DELTA = 0.00027;
-const DUPLICATE_LNG_DELTA = 0.0003;
 
 router.get('/', async (req, res) => {
   try {
@@ -42,7 +40,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { lat, lng, severity, source, ward, photo_url, reporter_id } = req.body;
+    const { lat, lng, severity, source, ward, photo_url, reporter_id, session_id } = req.body;
 
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       return res.status(400).json({ error: 'lat and lng are required and must be numbers' });
@@ -64,36 +62,54 @@ router.post('/', async (req, res) => {
     }
 
     let confidenceScore = source === 'auto' ? 30 : 0;
-
-    const duplicates = await query(
-      `SELECT id FROM potholes
-       WHERE ABS(lat - $1) <= $2
-         AND ABS(lng - $3) <= $4
-         AND created_at >= NOW() - INTERVAL '30 days'`,
-      [lat, DUPLICATE_LAT_DELTA, lng, DUPLICATE_LNG_DELTA]
-    );
-
-    if (duplicates.rowCount > 0) {
-      confidenceScore += 20;
-      await query(
-        `UPDATE potholes SET confidence_score = LEAST(confidence_score + 20, 100) WHERE id = ANY($1)`,
-        [duplicates.rows.map((row) => row.id)]
-      );
-    }
-
     if (typeof photo_url === 'string' && photo_url.trim()) {
       confidenceScore += 30;
     }
-
     confidenceScore = Math.min(confidenceScore, 100);
 
+    // Level 1: match against potholes within MERGE_RADIUS_METERS instead of
+    // always inserting a new row — see potholeMerge.js.
+    const { pothole, merged, collapsedSessionDuplicate } = await matchOrCreatePothole({
+      lat,
+      lng,
+      severity,
+      source,
+      ward: wardName,
+      wardNo,
+      photo_url: photo_url ?? null,
+      reporter_id: reporter_id ?? null,
+      session_id: session_id ?? null,
+      confidence_score: confidenceScore
+    });
+
+    if (collapsedSessionDuplicate) {
+      // Same dashcam pass re-pinging the same spot — not a new detection.
+      return res.status(200).json({ ...pothole, merged: false, collapsedSessionDuplicate: true });
+    }
+
+    // Level 2: re-run red-zone clustering now that the pothole set changed.
+    // Full-table batch recompute (see redZones.js) — cheap at current scale,
+    // and a failure here shouldn't fail the report itself.
+    try {
+      await recomputeAllRedZones();
+    } catch (redZoneError) {
+      console.error('Red zone recompute failed:', redZoneError);
+    }
+
+    res.status(201).json({ ...pothole, merged, collapsedSessionDuplicate: false });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/detections', async (req, res) => {
+  try {
+    const { id } = req.params;
     const result = await query(
-      `INSERT INTO potholes (lat, lng, severity, source, ward, ward_no, photo_url, reporter_id, confidence_score)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [lat, lng, severity, source, wardName, wardNo, photo_url ?? null, reporter_id ?? null, confidenceScore]
+      `SELECT * FROM raw_detections WHERE matched_pothole_id = $1 ORDER BY detected_at ASC`,
+      [id]
     );
-    res.status(201).json(result.rows[0]);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

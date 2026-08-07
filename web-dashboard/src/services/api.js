@@ -43,3 +43,13 @@ export async function getWardBoundaries() {
   const response = await fetch(`${API_BASE_URL}/wards/boundaries`);
   return handleResponse(response);
 }
+
+export async function getRedZones() {
+  const response = await fetch(`${API_BASE_URL}/red-zones`);
+  return handleResponse(response);
+}
+
+export async function getPotholeDetections(id) {
+  const response = await fetch(`${API_BASE_URL}/potholes/${id}/detections`);
+  return handleResponse(response);
+}

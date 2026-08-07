@@ -6,6 +6,7 @@ const usersRoutes = require('./routes/users');
 const uploadsRoutes = require('./routes/uploads');
 const wardsRoutes = require('./routes/wards');
 const officialsRoutes = require('./routes/officials');
+const redZonesRoutes = require('./routes/redZones');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ app.use('/users', usersRoutes);
 app.use('/uploads', uploadsRoutes);
 app.use('/wards', wardsRoutes);
 app.use('/officials', officialsRoutes);
+app.use('/red-zones', redZonesRoutes);
 
 app.listen(port, () => {
   console.log(`Backend listening on port ${port}`);

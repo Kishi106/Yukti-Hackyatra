@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { searchWards, getWardBoundary } from '../services/api';
+import { searchWards, getWardBoundary, getRedZones } from '../services/api';
 
 /* Mirrors the light-government design tokens in src/theme.js
    (INK/INK_LO/LINE/GOV/AMBER/GREEN/RED), duplicated here so this file stays a
@@ -32,6 +32,16 @@ const WARD_BOUNDARY_STYLE = {
   weight: 3,
   fillColor: GOV,
   fillOpacity: 0.12
+};
+
+// Distinct from individual pothole pins on purpose — a dashed red circle
+// reads as "risk area" rather than another marker in the clutter.
+const RED_ZONE_STYLE = {
+  color: RED,
+  weight: 2,
+  dashArray: '6 4',
+  fillColor: RED,
+  fillOpacity: 0.15
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -82,8 +92,24 @@ export default function MapView({ potholes, selectedPothole, onStatusChange, sel
   const [results, setResults] = useState([]);
   const [highlightedWardNo, setHighlightedWardNo] = useState(null);
   const [boundary, setBoundary] = useState(null);
+  const [redZones, setRedZones] = useState([]);
   const debounceRef = useRef(null);
   const markerRefs = useRef({});
+
+  // Re-fetch whenever the pothole set changes (Dashboard already polls
+  // GET /potholes) so newly-triggered red zones show up without a second
+  // independent timer.
+  useEffect(() => {
+    let cancelled = false;
+    getRedZones()
+      .then((data) => {
+        if (!cancelled) setRedZones(data);
+      })
+      .catch((err) => console.error('Failed to load red zones', err));
+    return () => {
+      cancelled = true;
+    };
+  }, [potholes]);
 
   // Let an external ward selection (e.g. the "Assigned ward" gate, or the
   // sidebar's "locate" button) drive the same highlight this component's own
@@ -218,6 +244,22 @@ export default function MapView({ potholes, selectedPothole, onStatusChange, sel
               <FitToBoundary boundary={boundary} />
             </>
           )}
+          {redZones.map((zone) => (
+            <Circle
+              key={zone.id}
+              center={[zone.centroid_lat, zone.centroid_lng]}
+              radius={zone.radius_m}
+              pathOptions={RED_ZONE_STYLE}
+            >
+              <Popup>
+                <div className="popup-content" style={inter}>
+                  <p style={{ color: INK }}><strong>Red Zone</strong></p>
+                  <p style={{ color: INK }}><strong>Potholes:</strong> {zone.pothole_count}</p>
+                  <p style={{ color: INK }}><strong>Risk score:</strong> {zone.risk_score}</p>
+                </div>
+              </Popup>
+            </Circle>
+          ))}
           {potholes.map((pothole) => (
             <Marker
               key={pothole.id}
